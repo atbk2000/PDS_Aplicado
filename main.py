@@ -1,57 +1,50 @@
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 import numpy as np
-from skimage.transform import radon
+import matplotlib.pyplot as plt
 
-def fourier2D(imagem):
+# Parâmetros
+
+# Frequência de amostragem
+Fs = 1000 
+# Duração do sinal (segundos)
+T = 4 
+# Número de amostras
+N = Fs * T 
+
+# Tempo
+t = np.linspace(0, T, N, endpoint=False)
+
+
+def generate_emg_signal(t, num_pulses=60):
+    '''Gerar sinal EMG básico: uma série de pulsos gaussianos.
+
+    :param t: série de tempo.
+    :param num_pulses: quantidade de pulsos gaussianos.
+
+    :return: sinal EMG.
     '''
-    Faz a transformada de Fourier de 2 dimensões de uma imagem.
-    Retorna o espectro de magnitudes.
-    '''
-    # Aplicar a Transformada de Fourier 2D
-    transformada = np.fft.fft2(imagem)
+    signal = np.zeros_like(t)
 
-    # Deslocar a transformada para que as baixas frequências fiquem no centro
-    transformada_deslocada = np.fft.fftshift(transformada)
+    for i in range(num_pulses):
+        pulse_time = np.random.uniform(0, T)
+        pulse_width = np.random.uniform(0.005, 0.009)
+        pulse_height = np.random.uniform(0.05, 0.5)
+        pulse = pulse_height * np.exp(-((t - pulse_time)**2) / (2 * (pulse_width**2)))
+        if i % 2 == 0:
+            signal += pulse
+        else:
+            signal -= pulse
 
-    # Calcular o espectro de magnitude (magnitude da transformada)
-    espectro_magnitude = np.abs(transformada_deslocada)
+    return signal
 
-    return espectro_magnitude
+emg_signal = generate_emg_signal(t)
 
+# Normalizar o sinal
+# emg_signal = (emg_signal - np.mean(emg_signal)) / np.std(emg_signal)
 
-def gerar_sinograma(imagem):
-    '''
-    Gera o sinograma a partir de uma imagem.
-    '''
-    # Definir os ângulos para a projeção
-    theta = np.linspace(0., 180., max(imagem.shape), endpoint=False)
+plt.figure(figsize=(15, 8))
+plt.plot(t, emg_signal)
+plt.title('Sinal EMG simulado')
+plt.xlabel('Tempo (s)')
+plt.ylabel('Amplitude')
 
-    # Projetar a imagem em diferentes ângulos (radon transform)
-    sinograma = radon(imagem, theta=theta)
-
-    # Plotar o sinograma
-    plt.figure(figsize=(10, 5))
-    plt.imshow(sinograma, cmap='gray', extent=(0, 180, 0, sinograma.shape[0]), aspect='auto')
-    plt.colorbar(label='Intensidade')
-    plt.xlabel('Ângulo (graus)')
-    plt.ylabel('Posição da projeção')
-    plt.title('Sinograma')
-    plt.show()
-
-
-# Carregar a imagem
-imagem = mpimg.imread('Imagens/phantom2.png')
-
-# Mostrar a imagem
-plt.imshow(imagem)
-plt.title('Imagem original')
-plt.axis('on')
 plt.show()
-
-# Converter a imagem para escala de cinza se necessário
-if len(imagem.shape) > 2:
-    imagem = np.mean(imagem, axis=2)
-
-gerar_sinograma(imagem)
-
